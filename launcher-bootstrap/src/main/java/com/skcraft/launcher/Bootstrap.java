@@ -96,7 +96,7 @@ public class Bootstrap {
 
             try {
                 JsonParser parser = new JsonParser();
-                JsonElement root = parser.parse(new FileReader(versionDir.getPath() + "\\version.json"));
+                JsonElement root = parser.parse(new FileReader(versionDir.getPath() + System.getProperty("file.separator") + "version.json"));
                 JsonObject rootobj = root.getAsJsonObject(); //May be an array, may be an object.
                 return rootobj.get("version").getAsString();
             } catch (FileNotFoundException e) {
@@ -150,9 +150,9 @@ public class Bootstrap {
             try {
                 Map<String, Object> map = new HashMap<>();
                 map.put("version", getJsonValues(this.getProperties().getProperty("latestUrl"), "version"));
-                Writer writer = new FileWriter(versionDir.getPath() + "\\version.json");
+                Writer writer = new FileWriter(versionDir.getPath() + System.getProperty("file.separator") + "version.json");
                 Bootstrap.log.info("Updating version file to " + getJsonValues(this.getProperties().getProperty("latestUrl"), "version"));
-                Bootstrap.log.info(versionDir.getPath() + "\\version.json");
+                Bootstrap.log.info(versionDir.getPath() + System.getProperty("file.separator") + "version.json");
                 new Gson().toJson(map, writer);
                 writer.close();
             } catch (Exception ex) {
