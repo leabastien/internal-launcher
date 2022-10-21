@@ -4,7 +4,7 @@
     {
       "title" : "Internal Official Pack",
       "name" : "Internal Official Pack",
-      "version" : "0.0.15",
+      "version" : "0.0.16",
       "location" : "internal-official-pack.json",
       "priority" : 0
     }

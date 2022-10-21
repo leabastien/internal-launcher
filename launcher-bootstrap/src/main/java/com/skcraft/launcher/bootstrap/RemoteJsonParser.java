@@ -26,8 +26,7 @@ public class RemoteJsonParser {
         JsonParser jp = new JsonParser(); //from gson
         JsonElement root = jp.parse(new InputStreamReader((InputStream) request.getContent())); //Convert the input stream to a json element
         JsonObject rootobj = root.getAsJsonObject(); //May be an array, may be an object.
-        return  rootobj.get(value).getAsString();
+        return rootobj.get(value).getAsString();
     }
-
-
 }
+

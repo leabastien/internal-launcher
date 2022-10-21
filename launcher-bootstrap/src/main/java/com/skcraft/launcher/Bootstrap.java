@@ -6,6 +6,7 @@
 
 package com.skcraft.launcher;
 
+import com.google.gson.*;
 import com.skcraft.launcher.bootstrap.*;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -16,12 +17,16 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Level;
 
 import static com.skcraft.launcher.bootstrap.RemoteJsonParser.getJsonValues;
 import static com.skcraft.launcher.bootstrap.SharedLocale.tr;
-import static com.skcraft.launcher.bootstrap.RemoteJsonParser.checkVersion;
+
 
 @Log
 public class Bootstrap {
@@ -31,6 +36,8 @@ public class Bootstrap {
     @Getter private final File baseDir;
     @Getter private final boolean portable;
     @Getter private final File binariesDir;
+
+    @Getter private final File versionDir;
     @Getter private final Properties properties;
     private final String[] originalArgs;
 
@@ -59,9 +66,11 @@ public class Bootstrap {
         this.baseDir = baseDir;
         this.portable = portable;
         this.binariesDir = new File(baseDir, "launcher");
+        this.versionDir = new File(baseDir, "version");
         this.originalArgs = args;
 
         binariesDir.mkdirs();
+        versionDir.mkdirs();
     }
 
     public void cleanup() {
@@ -79,37 +88,102 @@ public class Bootstrap {
         }
     }
 
+    public String getCurrentVersion() throws IOException, URISyntaxException {
+        File[] versionFile = versionDir.listFiles((dir, name) -> name.startsWith("version") && name.endsWith("json"));
+        assert versionFile != null;
+        if (Arrays.toString(versionFile) != "[]") {
+            Bootstrap.log.info(Arrays.toString(versionFile));
+
+            try {
+                JsonParser parser = new JsonParser();
+                JsonElement root = parser.parse(new FileReader(versionDir.getPath() + "\\version.json"));
+                JsonObject rootobj = root.getAsJsonObject(); //May be an array, may be an object.
+                return rootobj.get("version").getAsString();
+            } catch (FileNotFoundException e) {
+
+            } catch (IOException ioe){
+
+            }
+        } else {
+            Bootstrap.log.info("No version installed...");
+            return this.getProperties().getProperty("currentVersion");
+
+        }
+        return null;
+    }
 
     public void launch() throws Throwable {
         Bootstrap.log.info("Checking version on " + this.getProperties().getProperty("latestUrl"));
-
-        ComparableVersion current = new ComparableVersion(this.getProperties().getProperty("currentVersion"));
         ComparableVersion latest = new ComparableVersion(getJsonValues(this.getProperties().getProperty("latestUrl"), "version"));
+        Bootstrap.log.info("Checking current version...");
+        ComparableVersion current = new ComparableVersion(getCurrentVersion());
         Bootstrap.log.info("Latest version is " + latest + ", while current is " + current);
+
 
         if (latest.compareTo(current) >= 1) {
             Bootstrap.log.info("Update available at " + getJsonValues(this.getProperties().getProperty("latestUrl"), "url"));
+            File[] files = binariesDir.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File pathname) {
+                    return pathname.getName().endsWith(".jar");
+                }
+            });
+
+            if (files != null) {
+                for (File file : files) {
+                    file.delete();
+                }
+            }
+            File[] version_files_filtered = binariesDir.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File pathname) {
+                    return pathname.getName().endsWith(".json");
+                }
+            });
+
+            if (files != null) {
+                for (File file : files) {
+                    file.delete();
+                }
+            }
+
+            try {
+                Map<String, Object> map = new HashMap<>();
+                map.put("version", getJsonValues(this.getProperties().getProperty("latestUrl"), "version"));
+                Writer writer = new FileWriter(versionDir.getPath() + "\\version.json");
+                Bootstrap.log.info("Updating version file to " + getJsonValues(this.getProperties().getProperty("latestUrl"), "version"));
+                Bootstrap.log.info(versionDir.getPath() + "\\version.json");
+                new Gson().toJson(map, writer);
+                writer.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
+
+            launchInitial();
 
         } else {
             Bootstrap.log.info("No update required.");
+            File[] files = binariesDir.listFiles(new LauncherBinary.Filter());
+            List<LauncherBinary> binaries = new ArrayList<LauncherBinary>();
 
+            if (files != null) {
+                for (File file : files) {
+                    Bootstrap.log.info("Found " + file.getAbsolutePath() + "...");
+                    binaries.add(new LauncherBinary(file));
+                }
+            }
+
+            if (!binaries.isEmpty()) {
+                launchExisting(binaries, true);
+            } else {
+                launchInitial();
+            }
         }
 
-        File[] files = binariesDir.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File pathname) {
-                return pathname.getName().endsWith(".jar");
-            }
-        });
-
-        if (files != null) {
-            for (File file : files) {
-                file.delete();
-            }
-        }
-
-        launchInitial();
     }
+
+
 
     public void launchInitial() throws Exception {
         Bootstrap.log.info("Downloading the launcher...");
