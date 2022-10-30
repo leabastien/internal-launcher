@@ -51,10 +51,10 @@ public class LauncherFrame extends JFrame {
     private WebpagePanel webView;
     private JSplitPane splitPane;
     private final JButton launchButton = new JButton(SharedLocale.tr("launcher.launch"));
-    //private final JButton refreshButton = new JButton(SharedLocale.tr("launcher.checkForUpdates"));
+    private final JButton refreshButton = new JButton(SharedLocale.tr("launcher.checkForUpdates"));
     private final JButton optionsButton = new JButton(SharedLocale.tr("launcher.options"));
     private final JButton selfUpdateButton = new JButton(SharedLocale.tr("launcher.updateLauncher"));
-    //private final JCheckBox updateCheck = new JCheckBox(SharedLocale.tr("launcher.downloadUpdates"));
+    private final JCheckBox updateCheck = new JCheckBox(SharedLocale.tr("launcher.downloadUpdates"));
 
     /**
      * Create a new frame.
@@ -101,7 +101,7 @@ public class LauncherFrame extends JFrame {
             }
         });
 
-        //updateCheck.setSelected(true);
+        updateCheck.setSelected(true);
         instancesTable.setModel(instancesModel);
         launchButton.setFont(launchButton.getFont().deriveFont(Font.BOLD));
         splitPane.setDividerLocation(200);
@@ -109,8 +109,8 @@ public class LauncherFrame extends JFrame {
         splitPane.setOpaque(false);
         container.add(splitPane, "grow, wrap, span 5, gapbottom unrel, w null:680, h null:350");
         SwingHelper.flattenJSplitPane(splitPane);
-        //container.add(refreshButton);
-        //container.add(updateCheck);
+        container.add(refreshButton);
+        container.add(updateCheck);
         container.add(selfUpdateButton);
         container.add(optionsButton);
         container.add(launchButton);
@@ -128,14 +128,14 @@ public class LauncherFrame extends JFrame {
 
         instancesTable.addMouseListener(new DoubleClickToButtonAdapter(launchButton));
 
-        //refreshButton.addActionListener(new ActionListener() {
-        //    @Override
-        //    public void actionPerformed(ActionEvent e) {
-        //        loadInstances();
-        //        launcher.getUpdateManager().checkForUpdate();
-        //        webView.browse(launcher.getNewsURL(), false);
-        //    }
-        //});
+        refreshButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                loadInstances();
+                launcher.getUpdateManager().checkForUpdate();
+                webView.browse(launcher.getNewsURL(), false);
+            }
+        });
 
         selfUpdateButton.addActionListener(new ActionListener() {
             @Override
@@ -355,7 +355,7 @@ public class LauncherFrame extends JFrame {
     }
 
     private void launch() {
-        boolean permitUpdate = true; //updateCheck.isSelected();
+        boolean permitUpdate = updateCheck.isSelected();
         Instance instance = launcher.getInstances().get(instancesTable.getSelectedRow());
 
         LaunchOptions options = new LaunchOptions.Builder()

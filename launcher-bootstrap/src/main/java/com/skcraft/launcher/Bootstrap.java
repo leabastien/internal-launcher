@@ -101,8 +101,6 @@ public class Bootstrap {
                 return rootobj.get("version").getAsString();
             } catch (FileNotFoundException e) {
 
-            } catch (IOException ioe){
-
             }
         } else {
             Bootstrap.log.info("No version installed...");
