@@ -1,6 +1,0 @@
-#Render inventory contents of an enchanting table.
-#Allowed Values: NONE, FLAT, FLOATING, FANCY_FLOATING
-render_enchanting_table_contents = "FANCY_FLOATING"
-#Makes inventory contents of enchanting tables vanish from rendering when the player gets to far away.
-disappearing_enchanting_table_contents = false
-
